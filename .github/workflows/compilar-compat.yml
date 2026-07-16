@@ -7,10 +7,11 @@ jobs:
   build-windows:
     runs-on: windows-2022
     steps:
-      - name: Descargar código
+      - name: Descargar código directamente de Gondoi
         uses: actions/checkout@v4
         with:
-          ref: 'cpu-avx-vnni-q2_0' # Nos aseguramos de compilar la rama corregida de gondoi
+          repository: 'gondoi/llama.cpp' # Descargamos directamente su repo
+          ref: 'cpu-avx-vnni-q2_0'       # Apuntamos a la rama con el parche
 
       - name: Instalar CUDA Toolkit
         uses: Jimver/cuda-toolkit@v0.2.21
