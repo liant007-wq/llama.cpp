@@ -1,0 +1,42 @@
+name: Compilar Compatibilidad CUDA (Sin AVX2)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+        with:
+          ref: 'cpu-avx-vnni-q2_0' # Nos aseguramos de compilar la rama corregida de gondoi
+
+      - name: Instalar CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.21
+        with:
+          cuda: '12.6.0'
+          method: 'network'
+          use-github-cache: 'false'
+
+      - name: Configurar CMake (Compatibilidad Absoluta)
+        run: |
+          cmake -B build -DGGML_CUDA=ON -DGGML_BACKEND_SHARED=OFF -DGGML_AVX2=OFF -DGGML_FMA=OFF -DGGML_F16C=OFF -DGGML_AVX512=OFF -DCMAKE_GENERATOR_PLATFORM=x64
+
+      - name: Compilar
+        run: |
+          cmake --build build --config Release -j 4
+
+      - name: Copiar DLLs de CUDA a la carpeta de salida
+        run: |
+          copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin\cudart64_12.dll" build\bin\Release\
+          copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin\cublas64_12.dll" build\bin\Release\
+          copy "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin\cublasLt64_12.dll" build\bin\Release\
+
+      - name: Subir todo el contenido (Exes, DLLs de compilación y de CUDA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-cpp-cuda-noavx2
+          path: |
+            build/bin/Release/*.exe
+            build/bin/Release/*.dll
